@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPER_ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+model Organization {
+  id           String           @id @default(cuid())
+  name         String
+  users        User[]
+  policy       PasswordPolicy?
+  invitations  TeamInvitation[]
+  vaultEntries VaultEntry[]
+  createdAt    DateTime         @default(now())
+}
+
+model User {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  name           String?
+  passwordHash   String
+  masterKeySalt  String?
+  role           Role             @default(EMPLOYEE)
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  vaultEntries   VaultEntry[]
+  auditLogs      AuditLog[]
+  invitations    TeamInvitation[] @relation("InvitedBy")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model PasswordPolicy {
+  id               String       @id @default(cuid())
+  organizationId   String       @unique
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  minLength        Int          @default(12)
+  maxLength        Int          @default(128)
+  requireUppercase Boolean      @default(true)
+  requireLowercase Boolean      @default(true)
+  requireNumbers   Boolean      @default(true)
+  requireSymbols   Boolean      @default(true)
+  banSimilarWords  Boolean      @default(true)
+  bannedWords      String[]     @default([])
+  minEntropyBits   Float        @default(60.0)
+  passwordExpiry   Int?
+  updatedAt        DateTime     @updatedAt
+}
+
+model VaultEntry {
+  id              String       @id @default(cuid())
+  title           String
+  username        String
+  encryptedSecret String
+  iv              String
+  notes           String?
+  category        String?
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  userId          String
+  createdBy       User         @relation(fields: [userId], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model TeamInvitation {
+  id             String       @id @default(cuid())
+  email          String
+  token          String       @unique @default(cuid())
+  role           Role         @default(EMPLOYEE)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  invitedById    String
+  invitedBy      User         @relation("InvitedBy", fields: [invitedById], references: [id])
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  resource  String
+  details   Json?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
