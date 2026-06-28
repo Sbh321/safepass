@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/common/Providers";
 import { THEME_SCRIPT } from "@/lib/theme";
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           suppressHydrationWarning on <html> suppresses the expected class mismatch
           between SSR (no class) and client (class applied by this script).
         */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
 
         <Providers>
           {children}
