@@ -18,13 +18,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Populate token on first sign-in
       if (user) {
         token.id = user.id ?? "";
         token.role = ((user as { role?: string }).role) ?? "EMPLOYEE";
         token.organizationId = ((user as { organizationId?: string }).organizationId) ?? "";
         token.masterKeySalt = ((user as { masterKeySalt?: string | null }).masterKeySalt) ?? null;
       }
+
+      // Handle explicit session updates (e.g., after master key setup).
+      // `update()` from useSession() triggers trigger === "update" and passes
+      // the new data in `session`. We merge it into the token so it persists.
+      if (trigger === "update" && session?.masterKeySalt !== undefined) {
+        token.masterKeySalt = session.masterKeySalt as string | null;
+      }
+
       return token;
     },
     async session({ session, token }) {

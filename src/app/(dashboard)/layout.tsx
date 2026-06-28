@@ -4,22 +4,24 @@ import { Sidebar } from "@/components/common/Sidebar";
 import { Topbar } from "@/components/common/Topbar";
 import { headers } from "next/headers";
 
+// Ordered longest-first so "/vault/new" matches before "/vault"
+const TITLE_MAP: [string, string][] = [
+  ["/vault/setup", "Master Password Setup"],
+  ["/vault/new", "New Entry"],
+  ["/vault", "Vault"],
+  ["/policy", "Password Policy"],
+  ["/dashboard", "Dashboard"],
+];
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/login");
 
   const headersList = await headers();
-  const pathname = headersList.get("x-pathname") ?? "";
+  // Set by middleware on every request — always present for protected routes
+  const pathname = headersList.get("x-pathname") ?? "/dashboard";
 
-  const titleMap: Record<string, string> = {
-    "/dashboard": "Dashboard",
-    "/vault": "Vault",
-    "/vault/new": "New Entry",
-    "/vault/setup": "Master Password Setup",
-    "/policy": "Password Policy",
-  };
-
-  const title = Object.entries(titleMap).find(([path]) => pathname.startsWith(path))?.[1] ?? "SafePass";
+  const title = TITLE_MAP.find(([path]) => pathname.startsWith(path))?.[1] ?? "SafePass";
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

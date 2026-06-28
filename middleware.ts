@@ -34,7 +34,13 @@ export default auth((req) => {
     }
   }
 
-  return NextResponse.next();
+  // Forward pathname to server components via a request header.
+  // This is the canonical approach — Next.js server components cannot access
+  // the URL directly, so middleware stamps it here.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
+
+  return NextResponse.next({ request: { headers: requestHeaders } });
 });
 
 export const config = {

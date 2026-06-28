@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, KeyRound, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 export function MasterPasswordSetupClient() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const { setDerivedKey } = useVaultStore();
 
   const [masterPassword, setMasterPassword] = useState("");
@@ -63,6 +65,11 @@ export function MasterPasswordSetupClient() {
 
       // 4. Store the derived key in Zustand (in-memory only)
       setDerivedKey(derivedKey);
+
+      // 5. Force a JWT refresh so session.user.masterKeySalt reflects the new value.
+      // Without this, the old token (with masterKeySalt: null) stays alive and the
+      // vault page would redirect back to /vault/setup on next server-side render.
+      await updateSession({ masterKeySalt: salt });
 
       toast.success("Vault initialized!", {
         description: "Your Master Password has been set up. The key is loaded into memory.",
