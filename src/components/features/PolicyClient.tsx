@@ -166,7 +166,7 @@ export function PolicyClient({ policy, orgName, role }: Props) {
             <span className="w-1.5 h-1.5 rounded-full bg-primary" />
             Length Requirements
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(["minLength", "maxLength"] as const).map((field) => (
               <div key={field} className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">

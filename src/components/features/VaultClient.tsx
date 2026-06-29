@@ -189,8 +189,8 @@ export function VaultClient({ initialEntries }: { initialEntries: VaultEntry[] }
 
         {/* Table */}
         <div className="glass rounded-xl overflow-hidden">
-          {/* Header */}
-          <div className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-2.5 border-b border-border/50 bg-muted/30">
+          {/* Header — desktop only */}
+          <div className="hidden sm:grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-2.5 border-b border-border/50 bg-muted/30">
             {["Title", "Username", "Category", "Updated", ""].map((h) => (
               <span key={h} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 {h}
@@ -260,84 +260,130 @@ function VaultRow({
   onDelete: () => void;
   isDeleting: boolean;
 }) {
+  const actions = (size: "sm" | "md") => (
+    <div className="flex items-center gap-0.5">
+      <button
+        onClick={onReveal}
+        className={cn(
+          "flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors",
+          size === "md" ? "w-8 h-8" : "w-7 h-7"
+        )}
+        title={isRevealed ? "Hide password" : "Reveal password"}
+      >
+        {isRevealed
+          ? <EyeOff className={size === "md" ? "w-4 h-4" : "w-3.5 h-3.5"} />
+          : <Eye className={size === "md" ? "w-4 h-4" : "w-3.5 h-3.5"} />}
+      </button>
+      <button
+        onClick={onCopy}
+        className={cn(
+          "flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors",
+          size === "md" ? "w-8 h-8" : "w-7 h-7"
+        )}
+        title="Copy password"
+      >
+        <Copy className={size === "md" ? "w-4 h-4" : "w-3.5 h-3.5"} />
+      </button>
+      <button
+        onClick={onDelete}
+        disabled={isDeleting}
+        className={cn(
+          "flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors",
+          size === "md" ? "w-8 h-8" : "w-7 h-7"
+        )}
+        title="Delete entry"
+      >
+        <Trash2 className={size === "md" ? "w-4 h-4" : "w-3.5 h-3.5"} />
+      </button>
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.15, delay: index * 0.02 }}
-      className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-3 data-row items-center"
+      className="data-row"
     >
-      {/* Title */}
-      <div className="flex items-center gap-2.5 min-w-0">
-        <span className="text-base shrink-0">{categoryIcon(entry.category)}</span>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{entry.title}</p>
-          <AnimatePresence mode="wait">
-            {isRevealed && decryptedSecret ? (
-              <motion.p
-                key="revealed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-xs font-mono text-emerald-400 truncate"
-              >
-                {decryptedSecret}
-              </motion.p>
-            ) : (
-              <motion.p
-                key="masked"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-xs font-mono text-muted-foreground/50 tracking-widest"
-              >
-                {"•".repeat(12)}
-              </motion.p>
-            )}
-          </AnimatePresence>
+      {/* Mobile card layout */}
+      <div className="sm:hidden px-4 py-3">
+        <div className="flex items-start gap-3">
+          <span className="text-base shrink-0 mt-0.5">{categoryIcon(entry.category)}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium truncate">{entry.title}</p>
+              <div className="shrink-0">{actions("md")}</div>
+            </div>
+            <AnimatePresence mode="wait">
+              {isRevealed && decryptedSecret ? (
+                <motion.p key="revealed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="text-xs font-mono text-emerald-400 truncate mt-0.5">
+                  {decryptedSecret}
+                </motion.p>
+              ) : (
+                <motion.p key="masked" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="text-xs font-mono text-muted-foreground/50 tracking-widest mt-0.5">
+                  {"•".repeat(12)}
+                </motion.p>
+              )}
+            </AnimatePresence>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <p className="text-xs text-muted-foreground truncate">{entry.username}</p>
+              {entry.category && (
+                <>
+                  <span className="text-muted-foreground/30 text-xs">·</span>
+                  <Badge variant="outline" className="text-[10px] border-border/50 text-muted-foreground px-1.5 py-0">
+                    {entry.category}
+                  </Badge>
+                </>
+              )}
+              <span className="text-xs text-muted-foreground ml-auto">{timeAgo(entry.updatedAt)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Username */}
-      <p className="text-xs text-muted-foreground truncate">{entry.username}</p>
+      {/* Desktop table row */}
+      <div className="hidden sm:grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-3 items-center">
+        {/* Title */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="text-base shrink-0">{categoryIcon(entry.category)}</span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium truncate">{entry.title}</p>
+            <AnimatePresence mode="wait">
+              {isRevealed && decryptedSecret ? (
+                <motion.p key="revealed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="text-xs font-mono text-emerald-400 truncate">
+                  {decryptedSecret}
+                </motion.p>
+              ) : (
+                <motion.p key="masked" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="text-xs font-mono text-muted-foreground/50 tracking-widest">
+                  {"•".repeat(12)}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
-      {/* Category */}
-      {entry.category ? (
-        <Badge variant="outline" className="text-[10px] w-fit border-border/50 text-muted-foreground">
-          {entry.category}
-        </Badge>
-      ) : (
-        <span className="text-xs text-muted-foreground/40">—</span>
-      )}
+        {/* Username */}
+        <p className="text-xs text-muted-foreground truncate">{entry.username}</p>
 
-      {/* Updated */}
-      <span className="text-xs text-muted-foreground">{timeAgo(entry.updatedAt)}</span>
+        {/* Category */}
+        {entry.category ? (
+          <Badge variant="outline" className="text-[10px] w-fit border-border/50 text-muted-foreground">
+            {entry.category}
+          </Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground/40">—</span>
+        )}
 
-      {/* Actions */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={onReveal}
-          className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-          title={isRevealed ? "Hide password" : "Reveal password"}
-        >
-          {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-        </button>
-        <button
-          onClick={onCopy}
-          className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-          title="Copy password"
-        >
-          <Copy className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={onDelete}
-          disabled={isDeleting}
-          className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-          title="Delete entry"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        {/* Updated */}
+        <span className="text-xs text-muted-foreground">{timeAgo(entry.updatedAt)}</span>
+
+        {/* Actions */}
+        {actions("sm")}
       </div>
     </motion.div>
   );

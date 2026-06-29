@@ -196,7 +196,7 @@ export function NewVaultEntryClient({ policy }: Props) {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Title & Username */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Title
